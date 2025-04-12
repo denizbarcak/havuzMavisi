@@ -1,0 +1,31 @@
+package main
+
+import (
+	"github.com/denizbarcak/havuzMavisi/config"
+	"github.com/denizbarcak/havuzMavisi/middleware" // <-- bunu da ekle
+	"github.com/denizbarcak/havuzMavisi/routes"
+	"github.com/gofiber/fiber/v2"
+)
+
+func main() {
+	app := fiber.New()
+
+	config.ConnectDB()
+	routes.UserRoutes(app)
+	routes.CartRoutes(app)
+	routes.ProductRoutes(app)
+	app.Get("/", func(c *fiber.Ctx) error {
+		return c.SendString("Havuz Mavisi API’ye Hoş Geldiniz!")
+	})
+
+	// 👇 Korumalı örnek route
+	app.Get("/api/secret", middleware.RequireAuth(), func(c *fiber.Ctx) error {
+		user := c.Locals("email")
+		return c.JSON(fiber.Map{
+			"message": "Giriş yaptınız",
+			"user":    user,
+		})
+	})
+
+	app.Listen(":3000")
+}
