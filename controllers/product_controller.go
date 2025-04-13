@@ -110,7 +110,16 @@ func DeleteProduct(c *fiber.Ctx) error {
 func GetAllProducts(c *fiber.Ctx) error {
 	collection := config.GetCollection("products")
 
-	cursor, err := collection.Find(context.Background(), bson.M{})
+	// URL'den kategori parametresini al
+	category := c.Query("category")
+
+	// Sorgu filtresini oluştur
+	filter := bson.M{}
+	if category != "" {
+		filter["category"] = category
+	}
+
+	cursor, err := collection.Find(context.Background(), filter)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Ürünler alınamadı",
@@ -126,4 +135,20 @@ func GetAllProducts(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(products)
+}
+
+// Tek bir ürünü ID'ye göre getir
+func GetProductByID(c *fiber.Ctx) error {
+	productID := c.Params("id")
+	collection := config.GetCollection("products")
+
+	var product models.Product
+	err := collection.FindOne(context.Background(), bson.M{"_id": productID}).Decode(&product)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Ürün bulunamadı",
+		})
+	}
+
+	return c.JSON(product)
 }
