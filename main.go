@@ -2,7 +2,7 @@ package main
 
 import (
 	"github.com/denizbarcak/havuzMavisi/config"
-	"github.com/denizbarcak/havuzMavisi/middleware" // <-- bunu da ekle
+	"github.com/denizbarcak/havuzMavisi/middleware"
 	"github.com/denizbarcak/havuzMavisi/routes"
 	"github.com/gofiber/fiber/v2"
 )
@@ -10,12 +10,15 @@ import (
 func main() {
 	app := fiber.New()
 
+	// CORS middleware'ini kur
+	middleware.SetupCORS(app)
+	
 	config.ConnectDB()
 	routes.UserRoutes(app)
 	routes.CartRoutes(app)
 	routes.ProductRoutes(app)
 	app.Get("/", func(c *fiber.Ctx) error {
-		return c.SendString("Havuz Mavisi API’ye Hoş Geldiniz!")
+		return c.SendString("Havuz Mavisi API'ye Hoş Geldiniz!")
 	})
 
 	// 👇 Korumalı örnek route
