@@ -35,18 +35,29 @@ func RegisterUser(c *fiber.Ctx) error {
 	user.CreatedAt = time.Now()
 
 	collection := config.GetCollection("users")
+	
+	// Email kontrolü
+	var existingUser models.User
+	err = collection.FindOne(context.Background(), fiber.Map{"email": user.Email}).Decode(&existingUser)
+	if err == nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Bu email adresi zaten kayıtlı",
+		})
+	}
+
 	_, err = collection.InsertOne(context.Background(), user)
-if err != nil {
-    log.Println("Mongo hata:", err) // ← ekle
-    return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-        "error": "Kayıt başarısız",
-    })
-}
+	if err != nil {
+		log.Println("Mongo hata:", err) // ← ekle
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Kayıt başarısız",
+		})
+	}
 
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"message": "Kayıt başarılı",
 	})
 }
+
 func LoginUser(c *fiber.Ctx) error {
 	type LoginInput struct {
 		Email    string `json:"email"`

@@ -71,6 +71,7 @@ func UpdateProduct(c *fiber.Ctx) error {
 			"price":       updatedData.Price,
 			"category":    updatedData.Category,
 			"image_url":   updatedData.ImageURL,
+			"stock":       updatedData.Stock,
 		},
 	}
 

@@ -34,6 +34,23 @@ func AddToCart(c *fiber.Ctx) error {
 		})
 	}
 
+	// Ürünün stok durumunu kontrol et
+	productsCollection := config.GetCollection("products")
+	var product models.Product
+	err := productsCollection.FindOne(context.Background(), bson.M{"_id": input.ProductID}).Decode(&product)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "Ürün bulunamadı",
+		})
+	}
+
+	// Stok kontrolü
+	if product.Stock < input.Quantity {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "Yetersiz stok",
+		})
+	}
+
 	cartItem := models.CartItem{
 		ID:        uuid.New().String(),
 		UserID:    userID.(string),
@@ -43,7 +60,7 @@ func AddToCart(c *fiber.Ctx) error {
 	}
 
 	collection := config.GetCollection("cart")
-	_, err := collection.InsertOne(context.Background(), cartItem)
+	_, err = collection.InsertOne(context.Background(), cartItem)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Sepete eklenemedi",
@@ -213,10 +230,47 @@ func ClearCart(c *fiber.Ctx) error {
 		})
 	}
 
-	collection := config.GetCollection("cart")
+	// Önce sepetteki ürünleri al
+	cartCollection := config.GetCollection("cart")
+	productsCollection := config.GetCollection("products")
 	filter := bson.M{"user_id": userID}
 
-	_, err := collection.DeleteMany(context.Background(), filter)
+	cursor, err := cartCollection.Find(context.Background(), filter)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Sepet verileri alınamadı",
+		})
+	}
+	defer cursor.Close(context.Background())
+
+	var cartItems []models.CartItem
+	if err := cursor.All(context.Background(), &cartItems); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Sepet verileri çözümlenemedi",
+		})
+	}
+
+	// Her ürün için stok güncelleme
+	for _, item := range cartItems {
+		var product models.Product
+		err := productsCollection.FindOne(context.Background(), bson.M{"_id": item.ProductID}).Decode(&product)
+		if err != nil {
+			continue // Ürün bulunamadıysa diğerine geç
+		}
+
+		// Stok güncelleme
+		_, err = productsCollection.UpdateOne(
+			context.Background(),
+			bson.M{"_id": item.ProductID},
+			bson.M{"$set": bson.M{"stock": product.Stock - item.Quantity}},
+		)
+		if err != nil {
+			continue // Güncelleme başarısız olduysa diğerine geç
+		}
+	}
+
+	// Sepeti temizle
+	_, err = cartCollection.DeleteMany(context.Background(), filter)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Sepet temizlenemedi",
@@ -224,7 +278,7 @@ func ClearCart(c *fiber.Ctx) error {
 	}
 
 	return c.Status(200).JSON(fiber.Map{
-		"message": "Sepet başarıyla temizlendi",
+		"message": "Ödeme başarılı ve sepet temizlendi",
 	})
 }
 
