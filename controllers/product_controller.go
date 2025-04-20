@@ -111,13 +111,17 @@ func DeleteProduct(c *fiber.Ctx) error {
 func GetAllProducts(c *fiber.Ctx) error {
 	collection := config.GetCollection("products")
 
-	// URL'den kategori parametresini al
+	// URL'den kategori ve alt kategori parametrelerini al
 	category := c.Query("category")
+	subcategory := c.Query("subcategory")
 
 	// Sorgu filtresini oluştur
 	filter := bson.M{}
 	if category != "" {
 		filter["category"] = category
+	}
+	if subcategory != "" {
+		filter["subcategory"] = subcategory
 	}
 
 	cursor, err := collection.Find(context.Background(), filter)

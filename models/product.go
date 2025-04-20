@@ -8,6 +8,7 @@ type Product struct {
 	Description string    `json:"description" bson:"description"`
 	Price       float64   `json:"price" bson:"price"`
 	Category    string    `json:"category" bson:"category"`
+	SubCategory string    `json:"subcategory,omitempty" bson:"subcategory,omitempty"`
 	ImageURL    string    `json:"image_url" bson:"image_url"`
 	Stock       int       `json:"stock,omitempty" bson:"stock"`
 	CreatedAt   time.Time `json:"created_at" bson:"created_at"`
