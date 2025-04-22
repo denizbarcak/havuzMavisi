@@ -9,7 +9,9 @@ import (
 func AdminRoutes(app *fiber.App) {
 	// Admin ürün yönetimi route'ları
 	admin := app.Group("/api/admin")
-	admin.Use(middleware.RequireAuth)
+	
+	// Middleware'leri doğru sırada uygula - önce auth sonra admin
+	admin.Use(middleware.RequireAuth())
 	admin.Use(middleware.RequireAdmin)
 
 	// Ürün yönetimi

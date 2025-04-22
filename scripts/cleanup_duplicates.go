@@ -12,7 +12,7 @@ import (
 
 func main() {
 	// MongoDB'ye bağlan
-	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:27017"))
+	client, err := mongo.Connect(context.Background(), options.Client().ApplyURI("mongodb://localhost:27018"))
 	if err != nil {
 		log.Fatal(err)
 	}

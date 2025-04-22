@@ -4,14 +4,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// User model'ini burada tanımlayalım çünkü sadece Role field'ına ihtiyacımız var
-type User struct {
-	Role string `json:"role"`
-}
-
+// RequireAdmin checks if the user has admin role
 func RequireAdmin(c *fiber.Ctx) error {
-	user := c.Locals("user").(User)
-	if user.Role != "admin" {
+	role := c.Locals("role")
+	if role != "admin" {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
 			"error": "Bu işlem için admin yetkisi gereklidir",
 		})

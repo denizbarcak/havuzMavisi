@@ -18,6 +18,9 @@ func main() {
 	routes.CartRoutes(app)
 	routes.ProductRoutes(app)
 	routes.SubCategoryRoutes(app)
+	routes.SetupFavoriteRoutes(app)
+	routes.AdminRoutes(app)
+	
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString("Havuz Mavisi API'ye Hoş Geldiniz!")
 	})
